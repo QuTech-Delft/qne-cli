@@ -71,7 +71,7 @@ AuthType = Dict[str, Dict[str, str]]
 
 LoginFunctionType = Callable[[str, str, str, bool], str]
 LogoutFunctionType = Callable[[str], None]
-FallbackFunctionType = Callable[[], str]
+FallbackFunctionType = Callable[[str], str]
 TokenFetchFunctionType = Union[LoginFunctionType, FallbackFunctionType]
 
 ErrorDictType = Dict[str, List[str]]

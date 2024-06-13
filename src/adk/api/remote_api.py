@@ -7,7 +7,7 @@ from apistar.exceptions import ErrorResponse
 from adk import utils
 from adk.api.qne_client import QneFrontendClient
 from adk.exceptions import (ApiClientError, ApplicationError, ApplicationNotFound, ApplicationValueError,
-                            ExperimentFailed, ExperimentValueError, JobTimeoutError)
+                            AuthenticationError, ExperimentFailed, ExperimentValueError, JobTimeoutError)
 from adk.generators.result_generator import ResultGenerator
 from adk.managers.config_manager import ConfigManager
 from adk.managers.auth_manager import AuthManager
@@ -72,8 +72,8 @@ class RemoteApi:
         self.__refresh_token = self.__qne_client.login(email, password, host, use_username)
         return self.__refresh_token
 
-    def __login_anonymous(self) -> str:
-        return ""
+    def __login_anonymous(self, host: str) -> str:
+        raise AuthenticationError("Anonymous login not supported")
 
     def login(self, email: str, password: str, host: str, use_username: bool) -> None:
         """
@@ -683,7 +683,7 @@ class RemoteApi:
             application_slug: Slug of the application
 
         returns:
-            Returns empty list when all validations passes
+            Returns empty list when all validations pass
             Returns dict containing error messages of the validations that failed
         """
         error_dict: ErrorDictType = utils.get_empty_errordict()
@@ -774,7 +774,7 @@ class RemoteApi:
         """
         Because of differences in channel definition for api-router networks and asset networks we need a fix to
         translate these (local) channels to a format that the backend expects.
-        Also the asset needs an experiment entry with the experiment url
+        Also, the asset needs an experiment entry with the experiment url
         """
         asset_network = cast(assetNetworkType, asset_to_create["network"])
         experiment_channels = asset_network["channels"]
@@ -948,7 +948,7 @@ class RemoteApi:
         Get the remote networks and update the local network definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "networks"
@@ -991,7 +991,7 @@ class RemoteApi:
         Get the remote channels and update the local channel definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "channels"
@@ -1020,7 +1020,7 @@ class RemoteApi:
         Get the remote nodes and update the local node definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "nodes"
@@ -1053,7 +1053,7 @@ class RemoteApi:
         Get the remote templates and update the local template definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "templates"

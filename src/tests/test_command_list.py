@@ -248,8 +248,8 @@ class TestCommandList(unittest.TestCase):
             self.assertEqual(applications_validate_mock.call_count, 1)
             self.assertEqual(mock_validate_path_name.call_count, 1)
             application_clone_mock.assert_called_once_with(application_name=self.application, local=True,
-                                                            new_application_name='new_app',
-                                                            new_application_path=self.path / 'new_app')
+                                                           new_application_name='new_app',
+                                                           new_application_path=self.path / 'new_app')
             self.assertEqual(application_clone_output.exit_code, 0)
             self.assertIn(f"Application '{self.application}' cloned successfully in directory "
                           f"'{self.path / 'new_app'}'",
@@ -301,7 +301,7 @@ class TestCommandList(unittest.TestCase):
             # Raise ApplicationAlreadyExists
             application_exists_mock.return_value = True, "the_path"
             application_clone_output = self.runner.invoke(applications_app,
-                                                           ['clone', self.application, 'new_app'])
+                                                          ['clone', self.application, 'new_app'])
             self.assertIn(f"Application 'new_app' already exists. Application location: 'the_path'",
                           application_clone_output.stdout)
 
@@ -418,7 +418,7 @@ class TestCommandList(unittest.TestCase):
                                                                application_path=self.path)
             self.assertIn(f"Application '{self.application}' is valid", application_validate_output.stdout)
 
-            # When application is valid with item in in 'info'
+            # When application is valid with item in 'info'
             retrieve_appname_and_path_mock.reset_mock()
             applications_validate_mock.reset_mock()
             applications_validate_mock.return_value = {"error": [], "warning": [], "info": ["info"]}
