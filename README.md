@@ -34,7 +34,7 @@ A copy of a working application is made to your application directory and can be
 for application development.
 
 ## Prerequisites
-- A modern Linux or macOS (10 or 11) 64-bit (x86_64) operating system. If you don’t have Linux or macOS you could run it via virtualization, e.g. using VirtualBox. If you have Windows 10 or 11 you can also use the [Bash on Ubuntu](https://docs.microsoft.com/en-us/windows/wsl/) subsystem.
+- A modern Linux or macOS (10 or 11) 64-bit (x86_64) operating system. If you don’t have Linux or macOS you could run it via virtualization, e.g. using VirtualBox. If you have Windows 10 or 11 you can also use [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/).
 - A [virtual environment](https://docs.python.org/3/library/venv.html) should be created and activated before creating an application.
 - Python version 3.8 or higher.
 - NetQASM makes use of SquidASM for which you need credentials in order to use it. These credentials can be obtained by registering on the forum of [NetSquid](https://forum.netsquid.org/).
@@ -46,10 +46,10 @@ To install all the required packages, execute the following command:
 pip install qne-adk
 ```
 
-After installing the qne-adk, you can install SquidASM. Replace '{netsquid-user-name}' and '{netsquid-password}' with the credentials you registered on [NetSquid](https://forum.netsquid.org/):
+After installing the qne-adk, you can install [SquidASM](https://github.com/QuTech-Delft/squidasm). Replace `${NETSQUIDPYPI_USER}` and `${NETSQUIDPYPI_PWD}` with the username and password you registered on [NetSquid](https://forum.netsquid.org/):
 
 ```
-pip install squidasm --extra-index-url=https://{netsquid-user-name}:{netsquid-password}@pypi.netsquid.org
+pip install squidasm==0.12.1 --extra-index-url=https://${NETSQUIDPYPI_USER}:${NETSQUIDPYPI_PWD}@pypi.netsquid.org
 ```
 
 Now everything should be setup and ready in order to create your own applications and experiments and run them on the simulator!
