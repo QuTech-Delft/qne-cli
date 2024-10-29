@@ -588,7 +588,7 @@ def experiments_validate(
     """
     experiment_path, experiment_name = retrieve_experiment_name_and_path(experiment_name=experiment_name)
 
-    validate_dict = processor.experiments_validate(experiment_path=experiment_path)
+    validate_dict = processor.experiments_validate(experiment_path=experiment_path, local=True)
     validation_messages = format_validation_messages(validate_dict)
 
     if validate_dict["error"] or validate_dict["warning"]:

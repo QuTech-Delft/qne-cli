@@ -733,7 +733,7 @@ class RemoteApi:
         """
         backend_types = self.__qne_client.list_backendtypes()
         # "type" is required
-        backends = [backend for backend in backend_types if backend["name"].lower() == backend_type.lower()]
+        backends = [backend for backend in backend_types if str(backend["name"]).lower() == backend_type.lower()]
         if len(backends) > 1:
             # QNE configuration error, should be solved in QNE
             raise ExperimentValueError("More backend types with the same name configured in QNE")
@@ -866,7 +866,7 @@ class RemoteApi:
         experiment_asset = experiment_data["asset"]
         asset = self.__create_asset(experiment_asset, str(experiment["url"]))
         number_of_rounds = experiment_data["meta"]["number_of_rounds"]
-        round_set = self.__create_round_set(str(asset["url"]), backend_type[0]["url"], number_of_rounds)
+        round_set = self.__create_round_set(str(asset["url"]), str(backend_type[0]["url"]), number_of_rounds)
 
         return str(round_set["url"]), str(experiment["id"])
 

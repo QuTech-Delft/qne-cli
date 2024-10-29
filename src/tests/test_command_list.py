@@ -746,7 +746,7 @@ class TestCommandList(unittest.TestCase):
 
             experiment_validate_output = self.runner.invoke(experiments_app, ['validate'])
             retrieve_experiment_name_and_path_mock.assert_called_once_with(experiment_name=None)
-            experiments_validate_mock.assert_called_once_with(experiment_path=self.path)
+            experiments_validate_mock.assert_called_once_with(experiment_path=self.path, local=True)
             format_validation_messages_mock.assert_called_once()
             self.assertIn("Experiment failed validation", experiment_validate_output.stdout)
 
@@ -758,7 +758,7 @@ class TestCommandList(unittest.TestCase):
 
             experiment_validate_output = self.runner.invoke(experiments_app, ['validate'])
             retrieve_experiment_name_and_path_mock.assert_called_once_with(experiment_name=None)
-            experiments_validate_mock.assert_called_once_with(experiment_path=self.path)
+            experiments_validate_mock.assert_called_once_with(experiment_path=self.path, local=True)
             format_validation_messages_mock.assert_called_once()
             self.assertIn("Experiment failed validation", experiment_validate_output.stdout)
 
@@ -770,7 +770,7 @@ class TestCommandList(unittest.TestCase):
 
             experiment_validate_output = self.runner.invoke(experiments_app, ['validate'])
             retrieve_experiment_name_and_path_mock.assert_called_once_with(experiment_name=None)
-            experiments_validate_mock.assert_called_once_with(experiment_path=self.path)
+            experiments_validate_mock.assert_called_once_with(experiment_path=self.path, local=True)
             self.assertIn("Experiment is valid", experiment_validate_output.stdout)
 
             # When application is valid with item in in 'info'
@@ -781,7 +781,7 @@ class TestCommandList(unittest.TestCase):
 
             experiment_validate_output = self.runner.invoke(experiments_app, ['validate'])
             retrieve_experiment_name_and_path_mock.assert_called_once_with(experiment_name=None)
-            experiments_validate_mock.assert_called_once_with(experiment_path=self.path)
+            experiments_validate_mock.assert_called_once_with(experiment_path=self.path, local=True)
             self.assertIn("Experiment is valid", experiment_validate_output.stdout)
 
     def test_experiment_delete_no_experiment_dir(self):

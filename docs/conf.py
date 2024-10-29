@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 # -- Project information -----------------------------------------------------
 
 project = 'Quantum Network Explorer Application Development Kit'
-copyright = '2022, QuTech'
+copyright = '2024, QuTech'
 author = 'QuTech'
 
 # -- General configuration ---------------------------------------------------

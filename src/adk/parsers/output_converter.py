@@ -115,7 +115,7 @@ class OutputConverter:
                     log_record['INS'] = 'apply_gate'
                 logs.append(log_record)
 
-        return sorted(logs, key=lambda l: l['WCT'])
+        return sorted(logs, key=lambda l: cast(str, l['WCT']))
 
     def convert(self, round_number: int) -> ResultType:
         """Convert result and log files for one round number into a Result format compatible with the QNE
