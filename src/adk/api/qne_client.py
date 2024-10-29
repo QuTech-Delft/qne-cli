@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from functools import lru_cache
 import re
 from pathlib import Path
 from typing import Any, cast, Dict, List, Optional, Tuple, Union
@@ -432,10 +433,11 @@ class QneFrontendClient(QneClient):  # pylint: disable-msg=R0904
         response = self._action('partialUpdateAsset', id=asset_id, asset=params)
         return cast(AssetType, response)
 
-    def list_default_backendtypes(self) -> List[BackendTypeType]:
+    def list_default_backendtypes(self) -> BackendTypeType:
         response = self._action('listDefaultBackendTypes')
-        return cast(List[BackendTypeType], response)
+        return cast(BackendTypeType, response)
 
+    @lru_cache
     def list_backendtypes(self) -> List[BackendTypeType]:
         response = self._action('listBackendTypes')
         return cast(List[BackendTypeType], response)
@@ -453,6 +455,11 @@ class QneFrontendClient(QneClient):  # pylint: disable-msg=R0904
         _, backend_id = QneClient.parse_url(backend_url)
         response = self._action('retrieveBackend', id=backend_id)
         return cast(BackendType, response)
+
+    def list_backends_networks(self) -> List[Any]:
+        response = self._action('listBackendsNetworks')
+        return cast(List[Any], response)
+
 
     def list_experiments(self) -> List[ExperimentType]:
         response = self._action('listExperiments')

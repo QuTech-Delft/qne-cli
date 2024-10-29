@@ -7,7 +7,7 @@
     },
     "backend": {
       "location": "local",
-      "type": "local_netsquid"
+      "type": "NetSquid simulator"
     },
     "description": "teleport experiment description",
     "number_of_rounds": 1,

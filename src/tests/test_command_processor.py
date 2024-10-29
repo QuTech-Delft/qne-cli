@@ -331,10 +331,18 @@ class TestCommandProcessor(unittest.TestCase):
         self.remote_api.delete_experiment.assert_called_once()
         self.assertFalse(return_value)
 
-    def test_experiments_validate(self):
+    def test_experiments_validate_local(self):
         self.local_api.validate_experiment.return_value = self.error_dict
-        self.assertEqual(self.processor.experiments_validate(experiment_path=self.path), self.error_dict)
-        self.local_api.validate_experiment.assert_called_once_with(self.path)
+        self.assertEqual(self.processor.experiments_validate(experiment_path=self.path, local=True), self.error_dict)
+        self.local_api.validate_experiment.assert_called_once_with(self.path, self.error_dict)
+
+    def test_experiments_validate_remote(self):
+        self.local_api.validate_experiment.return_value = self.error_dict
+        experiment_data = {"test": 1}
+        self.local_api.get_experiment_data.return_value = experiment_data
+        self.assertEqual(self.processor.experiments_validate(experiment_path=self.path, local=False), self.error_dict)
+        self.remote_api.validate_experiment.assert_called_once_with(experiment_data, self.error_dict)
+        self.local_api.validate_experiment.assert_called_once_with(self.path, self.error_dict)
 
     def test_experiments_run(self):
         with patch('adk.command_processor.Path.mkdir') as mkdir_mock, \

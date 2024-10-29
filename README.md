@@ -1,11 +1,13 @@
 # Quantum Network Explorer ADK
 
-The QNE-ADK is a Quantum Network Explorer - Application Development Kit that allows you to create your own applications and experiments and run them on a simulator.
+The QNE-ADK is a Quantum Network Explorer - Application Development Kit that allows you to create your own applications
+and experiments and run them on a simulator.
 
 ## Local development
 
 With the ADK you can create your own application from scratch using the ``qne application create`` command
-(see section 'Commands' below for more information about the individual commands). An application directory is created with all the necessary files for you to configure.
+(see section 'Commands' below for more information about the individual commands). An application directory is created
+with all the necessary files for you to configure.
 When configuring an application, you specify the different roles and what types of inputs your
 application uses. In addition, you write the functionality of your application using the NetQASM library.
 
@@ -34,10 +36,13 @@ A copy of a working application is made to your application directory and can be
 for application development.
 
 ## Prerequisites
-- A modern Linux or macOS (10 or 11) 64-bit (x86_64) operating system. If you don’t have Linux or macOS you could run it via virtualization, e.g. using VirtualBox. If you have Windows 10 or 11 you can also use the [Bash on Ubuntu](https://docs.microsoft.com/en-us/windows/wsl/) subsystem.
+- A modern Linux or macOS (10 or 11) 64-bit (x86_64) operating system. If you don’t have Linux or macOS you could run
+  it via virtualization, e.g. using VirtualBox. If you have Windows 10 or 11 you can also use the [Bash on Ubuntu](https://docs.microsoft.com/en-us/windows/wsl/)
+  subsystem.
 - A [virtual environment](https://docs.python.org/3/library/venv.html) should be created and activated before creating an application.
 - Python version 3.8 or higher.
-- NetQASM makes use of SquidASM for which you need credentials in order to use it. These credentials can be obtained by registering on the forum of [NetSquid](https://forum.netsquid.org/).
+- NetQASM makes use of SquidASM for which you need credentials in order to use it. These credentials can be obtained by
+  registering on the forum of [NetSquid](https://forum.netsquid.org/).
 
 ## Installation
 To install all the required packages, execute the following command:
@@ -46,16 +51,19 @@ To install all the required packages, execute the following command:
 pip install qne-adk
 ```
 
-After installing the qne-adk, you can install SquidASM. Replace '{netsquid-user-name}' and '{netsquid-password}' with the credentials you registered on [NetSquid](https://forum.netsquid.org/):
+After installing the qne-adk, you can install SquidASM. Replace '{netsquid-user-name}' and '{netsquid-password}' with
+the credentials you registered on [NetSquid](https://forum.netsquid.org/):
 
 ```
 pip install squidasm --extra-index-url=https://{netsquid-user-name}:{netsquid-password}@pypi.netsquid.org
 ```
 
-Now everything should be setup and ready in order to create your own applications and experiments and run them on the simulator!
+Now everything should be setup and ready in order to create your own applications and experiments and run them on the
+simulator!
 
 ## Commands
-The QNE-ADK uses various commands to create and run your applications and experiments. All the commands are listed below:
+The QNE-ADK uses various commands to create and run your applications and experiments. All the commands are listed
+below:
 
 <!--- QNE APPLICATION LIST --->
 <details closed>

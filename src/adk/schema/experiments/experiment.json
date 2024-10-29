@@ -39,9 +39,6 @@
             },
             "type": {
               "type": "string"
-            },
-            "experiment_id": {
-              "type": "integer"
             }
           },
           "required": [

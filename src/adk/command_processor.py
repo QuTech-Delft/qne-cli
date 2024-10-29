@@ -291,16 +291,24 @@ class CommandProcessor:
         return self.__remote.experiments_list()
 
     @log_function
-    def experiments_validate(self, experiment_path: Path) -> ErrorDictType:
-        """ Validate the local experiment files
+    def experiments_validate(self, experiment_path: Path, local: bool) -> ErrorDictType:
+        """
+        Validate the experiment files. For remote also check if the backend is a valid backend and the requested
+        backend is available.
 
         Args:
             experiment_path: directory where experiment resides
+            local: Boolean flag specifying whether experiment is local or remote
 
         Returns:
             Dictionary with errors, warnings found
         """
-        return self.__local.validate_experiment(experiment_path)
+        error_dict: ErrorDictType = utils.get_empty_errordict()
+        if not local:
+            experiment_data = self.__local.get_experiment_data(experiment_path)
+            self.__remote.validate_experiment(experiment_data, error_dict)
+        self.__local.validate_experiment(experiment_path, error_dict)
+        return error_dict
 
     @log_function
     def experiments_delete_remote_only(self, experiment_id: str) -> bool:
@@ -319,7 +327,7 @@ class CommandProcessor:
     @log_function
     def experiments_delete(self, experiment_name: str, experiment_path: Path) -> bool:
         """
-        Get the remote experiment id registered for this experiment when it run remote, delete this remote experiment.
+        Get the remote experiment id registered for this experiment when it ran remote, delete this remote experiment.
         Then delete the local experiment.
 
         Args:
