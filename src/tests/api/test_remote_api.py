@@ -32,7 +32,8 @@ class TestRemoteApi(unittest.TestCase):
             "networks": [
                 "randstad",
                 "europe",
-                "the-netherlands"
+                "the-netherlands",
+                'qutech-delft-lab-1'
             ],
             "roles": [
                 "sender",
@@ -193,7 +194,7 @@ class TestRemoteApi(unittest.TestCase):
                 },
                 "backend": {
                     "location": "remote",
-                    "type": 'NV center'
+                    "type": 'NV center hardware'
                 },
                 "description": "experiment description",
                 "number_of_rounds": 1,
@@ -201,22 +202,13 @@ class TestRemoteApi(unittest.TestCase):
             },
             "asset": {
                  "network": {
-                     "name": "Randstad",
-                     "slug": "randstad",
-                     "nodes": [{"slug": "n1", "node_parameters": None, "qubits": self.dummy_qubit},
-                               {"slug": "n2", "node_parameters": None, "qubits": self.dummy_qubit},
-                               {"slug": "n3", "node_parameters": None, "qubits": self.dummy_qubit},
-                               {"slug": "n4", "node_parameters": None, "qubits": self.dummy_qubit},
-                               {"slug": "n5", "node_parameters": None, "qubits": self.dummy_qubit}],
-                     "channels": [{"slug": "n1-n2", "parameters": self.dummy_channel_params,
-                                   "node1": "n1", "node2": "n2"},
-                                  {"slug": "n2-n3", "parameters": self.dummy_channel_params,
-                                   "node1": "n2", "node2": "n3"},
-                                  {"slug": "n4-n3", "parameters": self.dummy_channel_params,
-                                   "node1": "n4", "node2": "n3"},
-                                  {"slug": "n4-n5", "parameters": self.dummy_channel_params,
-                                   "node1": "n4", "node2": "n5"}],
-                     "roles": {"role1": "n1", "role2": "n2"}
+                     "name": "QuTech Delft lab 1",
+                     "slug": "qutech-delft-lab-1",
+                     "nodes": [{"slug": "node-1", "node_parameters": None, "qubits": self.dummy_qubit},
+                               {"slug": "node-2", "node_parameters": None, "qubits": self.dummy_qubit}],
+                     "channels": [{"slug": "node-1-node-2", "parameters": self.dummy_channel_params,
+                                   "node1": "node-1", "node2": "node-2"}],
+                     "roles": {"role1": "node-1", "role2": "node-2"}
                  },
                  "application": [
                     {'roles': ['role2'],
@@ -243,14 +235,16 @@ class TestRemoteApi(unittest.TestCase):
         self.backend_nv_center = {
                 'id': 2,
                 'url': f'{self.host}backendtypes/2/',
-                'name': 'NV center',
+                'name': 'NV center hardware',
                 'is_hardware_backend': True,
                 'required_permission': 'can_execute',
-                'description': 'Hardware network using NV center technology located at the QuTech Delft lab.',
+                'description': 'NV center quantum computing backend for specialized experiments.',
                 'is_allowed': True,
                 'status': 'ONLINE',
                 'status_message': 'This backend is online.',
-                'max_number_of_simultaneous_experiments': 1
+                'max_number_of_simultaneous_experiments': 1,
+                'networks': [{'id': 4, 'url': f'{self.host}networks/4/', 'name': 'QuTech Delft lab 1',
+                              'slug': 'qutech-delft-lab-1'}]
             }
         self.backend_netsquid_simulator = {
             'id': 1,
@@ -262,48 +256,15 @@ class TestRemoteApi(unittest.TestCase):
             'is_allowed': True,
             'status': 'ONLINE',
             'status_message': 'This backend is online.',
-            'max_number_of_simultaneous_experiments': 0
+            'max_number_of_simultaneous_experiments': 0,
+            'networks': [{'id': 1, 'url': f'{self.host}networks/1/', 'name': 'Randstad', 'slug': 'randstad'},
+                         {'id': 2, 'url': f'{self.host}networks/2/', 'name': 'The Netherlands',
+                          'slug': 'the-netherlands'},
+                         {'id': 3, 'url': f'{self.host}networks/3/', 'name': 'Europe', 'slug': 'europe'},
+                         {'id': 4, 'url': f'{self.host}networks/4/', 'name': 'QuTech Delft lab 1',
+                          'slug': 'qutech-delft-lab-1'}]
         }
         self.list_backendtypes = [self.backend_nv_center, self.backend_netsquid_simulator]
-        self.list_backends_networks = [
-            {
-                "backend_type": {
-                    'id': 1,
-                    'url': f'{self.host}backendtypes/1/',
-                    'name': 'NetSquid simulator',
-                    'is_hardware_backend': False,
-                    'required_permission': 'can_simulate',
-                    'description': 'The Network Simulator for Quantum Information using discrete events running on a Hetzner VPS.',
-                    'is_allowed': True,
-                    'status': 'ONLINE',
-                    'status_message': 'This backend is online.',
-                    'max_number_of_simultaneous_experiments': 0
-                },
-                "networks": [
-                    {'id': 1, 'url': 'http://127.0.0.1:8000/networks/1/', 'name': 'Randstad', 'slug': 'randstad'},
-                    {'id': 2, 'url': 'http://127.0.0.1:8000/networks/2/', 'name': 'The Netherlands', 'slug': 'the-netherlands'},
-                    {'id': 3, 'url': 'http://127.0.0.1:8000/networks/3/', 'name': 'Europe', 'slug': 'europe'},
-                    {'id': 4, 'url': 'http://127.0.0.1:8000/networks/4/', 'name': 'Basement', 'slug': 'basement'}
-                ]
-            },
-            {
-               "backend_type": {
-                    'id': 2,
-                    'url': f'{self.host}backendtypes/2/',
-                    'name': 'NV center',
-                    'is_hardware_backend': True,
-                    'required_permission': 'can_execute',
-                    'description': 'Hardware network using NV center technology located at the QuTech Delft lab.',
-                    'is_allowed': True,
-                    'status': 'ONLINE',
-                    'status_message': 'This backend is online.',
-                    'max_number_of_simultaneous_experiments': 1
-               },
-               "networks": [
-                   {'id': 4, 'url': 'http://127.0.0.1:8000/networks/4/', 'name': 'Basement', 'slug': 'basement'}
-               ]
-            },
-        ]
         self.experiment = {
             'app_version': f'{self.host}app-versions/42/',
             'created_at': '2024-10-27T14:08:54.127099Z',
@@ -788,28 +749,39 @@ class TestRemoteApiExperiment(TestRemoteApi):
         error_dict = get_empty_errordict()
         self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = []
         self.remote_api.validate_experiment(self.experiment_data, error_dict)
-        self.assertIn("Backend type in experiment is not a valid remote backend type "
+        self.assertIn("Backend in experiment is not a valid remote backend "
                       "(names must match)", error_dict['error'])
 
         error_dict = get_empty_errordict()
         self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
         self.experiment_data["meta"]["backend"]["type"] = "non-existent backendtype"
         self.remote_api.validate_experiment(self.experiment_data, error_dict)
-        self.assertIn("Backend type in experiment is not a valid remote backend type "
+        self.assertIn("Backend in experiment is not a valid remote backend "
                       "(names must match)", error_dict['error'])
 
         error_dict = get_empty_errordict()
         self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
         self.experiment_data["meta"]["backend"]["location"] = "local"
-        self.experiment_data["meta"]["backend"]["type"] = "NV center"
+        self.experiment_data["meta"]["backend"]["type"] = "NV center hardware"
         self.list_backendtypes[0]["is_allowed"] = False
         self.list_backendtypes[0]["status"] = "OFFLINE"
         self.remote_api.validate_experiment(self.experiment_data, error_dict)
-
         self.assertIn("Backend location in experiment is not remote", error_dict['error'])
         self.assertIn("The requested remote backend is OFFLINE", error_dict['warning'])
         self.assertIn('The requested remote backend is not available for your current account type, select a '
-                      'different backend.', error_dict['error'])
+                      'different backend', error_dict['error'])
+
+        error_dict = get_empty_errordict()
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+        self.experiment_data["asset"]["network"]["slug"] = "randstad"
+        self.experiment_data["asset"]["network"]["name"] = "Randstad"
+        self.experiment_data["meta"]["backend"]["location"] = "remote"
+        self.experiment_data["meta"]["backend"]["type"] = "NV center hardware"
+        self.list_backendtypes[0]["is_allowed"] = True
+        self.list_backendtypes[0]["status"] = "ONLINE"
+        self.remote_api.validate_experiment(self.experiment_data, error_dict)
+        self.assertIn("The requested remote backend is not able to run an experiment on the "
+                      "selected network, select a different backend or change the network", error_dict['error'])
 
     def test_run_experiment_success(self):
         with patch.object(RemoteApi, "_RemoteApi__get_application_by_slug") as get_application_by_slug_mock:
@@ -851,7 +823,7 @@ class TestRemoteApiExperiment(TestRemoteApi):
         self.experiment_data["meta"]["backend"]["type"] = "non-existent backendtype"
         with self.assertRaises(ExperimentValueError) as cm:
             return_value = self.remote_api.run_experiment(self.experiment_data)
-        self.assertEqual("Backend type in experiment is not a valid remote backend type (names must match)",
+        self.assertEqual("Backend in experiment is not a valid remote backend (names must match)",
                          str(cm.exception))
 
     def test_get_results_succeeds(self):

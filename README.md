@@ -1,7 +1,7 @@
 # Quantum Network Explorer ADK
 
 The QNE-ADK is a Quantum Network Explorer - Application Development Kit that allows you to create your own applications
-and experiments and run them on a simulator.
+and experiments and run them on a simulator or real quantum network hardware.
 
 ## Local development
 

@@ -456,11 +456,6 @@ class QneFrontendClient(QneClient):  # pylint: disable-msg=R0904
         response = self._action('retrieveBackend', id=backend_id)
         return cast(BackendType, response)
 
-    def list_backends_networks(self) -> List[Any]:
-        response = self._action('listBackendsNetworks')
-        return cast(List[Any], response)
-
-
     def list_experiments(self) -> List[ExperimentType]:
         response = self._action('listExperiments')
         return cast(List[ExperimentType], response)
@@ -561,9 +556,9 @@ class QneFrontendClient(QneClient):  # pylint: disable-msg=R0904
         response = self._action('retrieveTemplate', id=template_id)
         return cast(TemplateType, response)
 
-    def list_networks(self) -> List[NetworkListType]:
+    def list_networks(self) -> NetworkListType:
         response = self._action('listNetworks')
-        return cast(List[NetworkListType], response)
+        return cast(NetworkListType, response)
 
     def retrieve_network(self, network_url: str) -> NetworkType:
         _, network_id = QneClient.parse_url(network_url)

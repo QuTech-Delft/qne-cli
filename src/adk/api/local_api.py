@@ -212,7 +212,7 @@ class LocalApi:
 
     def _get_network_nodes(self) -> Dict[str, List[str]]:
         """
-        Loops trough all the networks in networks/networks.json and gets all the nodes within this network.
+        Loops through all the networks in networks/networks.json and gets all the nodes within this network.
 
         returns:
         Returns a dict of networks, each having their own list including the nodes:
@@ -903,7 +903,7 @@ class LocalApi:
         Create all the necessary resources for experiment creation
          - 1. Get the network data for the specified network_name
          - 2. Create the asset
-         - 3. Create experiment.json containing the meta data and asset information
+         - 3. Create experiment.json containing the metadata and asset information
 
         Args:
             experiment_name: Name of the experiment
@@ -963,7 +963,8 @@ class LocalApi:
     def __create_experiment(self, experiment_name: str, application_name: str, local: bool, path: Path,
                             app_config: AppConfigType, asset_network: assetNetworkType) -> None:
         """
-        Create experiment.json with meta and asset information
+        Create experiment.json with meta and asset information. We don't need to check if the network is compatible
+        with the default backend type because the default backend type can run all networks.
 
         Args:
             experiment_name: Name of the directory where experiment.json will be created

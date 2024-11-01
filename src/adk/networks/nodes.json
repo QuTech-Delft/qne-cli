@@ -129,8 +129,8 @@
       ]
     },
     {
-      "name":"Paris",
-      "slug":"paris",
+      "name": "Paris",
+      "slug": "paris",
       "coordinates": {
         "latitude": 48.8302,
         "longitude": 2.3816
@@ -171,6 +171,38 @@
         "gate-fidelity"
       ],
       "number_of_qubits": 3,
+      "qubit_parameters": [
+        "relaxation-time",
+        "dephasing-time"
+      ]
+    },
+    {
+      "name": "Node 1",
+      "slug": "node-1",
+      "coordinates": {
+        "latitude": 52.0019,
+        "longitude": 4.37509
+      },
+      "node_parameters": [
+        "gate-fidelity"
+      ],
+      "number_of_qubits": 1,
+      "qubit_parameters": [
+        "relaxation-time",
+        "dephasing-time"
+      ]
+    },
+    {
+      "name": "Node 2",
+      "slug": "node-2",
+      "coordinates": {
+        "latitude": 52.00092,
+        "longitude": 4.37579
+      },
+      "node_parameters": [
+        "gate-fidelity"
+      ],
+      "number_of_qubits": 1,
       "qubit_parameters": [
         "relaxation-time",
         "dephasing-time"

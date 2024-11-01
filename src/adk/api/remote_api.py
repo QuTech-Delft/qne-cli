@@ -16,7 +16,8 @@ from adk.type_aliases import (AppConfigType, AppResultType, AppSourceFilesType, 
                               ApplicationType, ApplicationDataType, AssetType, assetNetworkType, ErrorDictType,
                               ExperimentType, FinalResultType, GenericNetworkData, ExperimentDataType, ResultType,
                               RoundSetType, round_resultType, cumulative_resultType, instructionsType, ChannelType,
-                              parametersType, coordinatesType, listValuesType, app_ownerType, BackendTypeType)
+                              parametersType, coordinatesType, listValuesType, app_ownerType, BackendTypeType,
+                              NetworkListType)
 from adk.settings import BASE_DIR
 from adk.utils import get_default_remote_data
 
@@ -724,20 +725,21 @@ class RemoteApi:
 
         return experiment_list
 
-    def __get_backend_type(self, backend_type: str) -> List[BackendTypeType]:
+    def __get_backend_type(self, backend_type_name: str) -> List[BackendTypeType]:
         """
-        Get the backend info for the remote backend in the experiment data.
+        Get the backend type info for the (remote) backend type in the experiment data.
 
         Returns:
             0 or 1 backend types with this type
         """
         backend_types = self.__qne_client.list_backendtypes()
         # "type" is required
-        backends = [backend for backend in backend_types if str(backend["name"]).lower() == backend_type.lower()]
-        if len(backends) > 1:
+        backend_types = [backend_type for backend_type in backend_types if str(backend_type["name"]).lower() ==
+                         backend_type_name.lower()]
+        if len(backend_types) > 1:
             # QNE configuration error, should be solved in QNE
             raise ExperimentValueError("More backend types with the same name configured in QNE")
-        return backends
+        return backend_types
 
     def validate_experiment(self, experiment_data: ExperimentDataType, error_dict: ErrorDictType) -> None:
         """
@@ -750,12 +752,18 @@ class RemoteApi:
         # "type" is required
         backend_types = self.__get_backend_type(experiment_data["meta"]["backend"]["type"])
         if len(backend_types) == 0:
-            error_dict["error"].append("Backend type in experiment is not a valid remote backend type "
+            error_dict["error"].append("Backend in experiment is not a valid remote backend "
                                        "(names must match)")
         else:
+            networks = cast(NetworkListType, backend_types[0]["networks"])
+            networks = [network for network in networks if network["slug"] ==
+                        experiment_data["asset"]["network"]["slug"]]
+            if len(networks) == 0:
+                error_dict["error"].append("The requested remote backend is not able to run an experiment on the "
+                                           "selected network, select a different backend or change the network")
             if not backend_types[0]["is_allowed"]:
                 error_dict["error"].append("The requested remote backend is not available for your current account "
-                                           "type, select a different backend.")
+                                           "type, select a different backend")
             if backend_types[0]["status"] == "OFFLINE":
                 error_dict["warning"].append("The requested remote backend is OFFLINE")
 
@@ -860,7 +868,7 @@ class RemoteApi:
         app_version_url = experiment_data["meta"]["application"]["app_version"]
         backend_type = self.__get_backend_type(experiment_data["meta"]["backend"]["type"])
         if len(backend_type) == 0:
-            raise ExperimentValueError("Backend type in experiment is not a valid remote backend type "
+            raise ExperimentValueError("Backend in experiment is not a valid remote backend "
                                        "(names must match)")
         experiment = self.__create_experiment(application_slug, app_version_url)
         experiment_asset = experiment_data["asset"]
@@ -998,7 +1006,7 @@ class RemoteApi:
         networks = self.__qne_client.list_networks()
         for network in networks:
             network_type_json: Dict[str, Union[str, List[str]]] = {}
-            network_type = self.__qne_client.retrieve_network(str(network["url"]))
+            network_type = self.__qne_client.retrieve_network(cast(str, network["url"]))
             network_type_json["name"] = str(network_type["name"])
             network_type_json["slug"] = str(network_type["slug"])
             network_type_channels: List[str] = []
