@@ -36,8 +36,13 @@
         "eindhoven-enschede",
         "enschede-amsterdam"
       ]
+    },
+    "qutech-delft-lab-1": {
+      "name": "QuTech Delft lab 1",
+      "slug": "qutech-delft-lab-1",
+      "channels": [
+        "node-1-node-2"
+      ]
     }
   }
 }
-
-

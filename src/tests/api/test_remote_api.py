@@ -1,11 +1,13 @@
 import copy
 import unittest
 
+from apistar.exceptions import ErrorResponse
 from pathlib import Path
 from unittest.mock import call, patch, MagicMock, mock_open
 
 from adk.api.remote_api import RemoteApi
-from adk.exceptions import ApiClientError, ApplicationError, ApplicationNotFound
+from adk.exceptions import ApiClientError, ApplicationError, ApplicationNotFound, ExperimentValueError
+from adk.utils import get_empty_errordict
 
 
 class TestRemoteApi(unittest.TestCase):
@@ -16,7 +18,7 @@ class TestRemoteApi(unittest.TestCase):
         self.email = 'test@email.com'
         self.password = 'password'
         self.token = 'token'
-        self.user = {"id": 123456}
+        self.user = {"id": 123456, "url": f'{self.host}users/1/'}
         self.application_data = {
             "application": {
                 "name": "test_app",
@@ -30,7 +32,8 @@ class TestRemoteApi(unittest.TestCase):
             "networks": [
                 "randstad",
                 "europe",
-                "the-netherlands"
+                "the-netherlands",
+                'qutech-delft-lab-1'
             ],
             "roles": [
                 "sender",
@@ -83,10 +86,10 @@ class TestRemoteApi(unittest.TestCase):
                        'app_version': {
                            'enabled': True,
                            'version': 1,
-                           'app_version': 'http://unittest_server/app_version/42',
-                           'app_config': 'http://unittest_server/app_config/43',
-                           'app_result': 'http://unittest_server/app_result/44',
-                           'app_source': 'http://unittest_server/app_source/45'
+                           'app_version': f'{self.host}app_version/42',
+                           'app_config': f'{self.host}app_config/43',
+                           'app_result': f'{self.host}app_result/44',
+                           'app_source': f'{self.host}app_source/45'
                        }
                        }
         }
@@ -98,14 +101,6 @@ class TestRemoteApi(unittest.TestCase):
             "name": self.application_data["application"]["name"],
             "description": self.application_data["application"]["description"],
             "owner": self.application_data["application"]["owner"]
-        }
-
-        self.app_version = {
-            "id": 42,
-            "url": f"{self.host}app_version/42",
-            "application": self.application["url"],
-            "version": 1,
-            "is_disabled": True
         }
         app_version_url = f"{self.host}app_version/42"
         self.app_config = {
@@ -158,6 +153,170 @@ class TestRemoteApi(unittest.TestCase):
         }
         self.app_versions_owner = [self.app_version_disabled, self.app_version]
         self.app_versions_not_owner = [self.app_version]
+        self.retrieve_application = self.application
+        self.list_applications = [self.application]
+        self.retrieve_appversion = self.app_version
+        self.dummy_qubit = [{
+                "qubit_id": 0,
+                "qubit_parameters": [
+                    {
+                        "slug": "relaxation-time",
+                        "values": [
+                            {
+                                "name": "t1",
+                                "value": 0,
+                                "scale_value": 1.0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+
+        self.dummy_channel_params = [
+                {
+                  "slug": "elementary-link-fidelity",
+                  "values": [
+                    {
+                      "name": "fidelity",
+                      "value": 12344.0,
+                      "scale_value": 1.0
+                    }
+                  ]
+                }
+        ]
+        self.experiment_data = {
+            "meta": {
+                "application": {
+                    "slug": "app_slug",
+                    "app_version": f"{self.host}app_version/42",
+                    "multi_round": "False"
+                },
+                "backend": {
+                    "location": "remote",
+                    "type": 'NV center hardware'
+                },
+                "description": "experiment description",
+                "number_of_rounds": 1,
+                "name": "experiment3"
+            },
+            "asset": {
+                 "network": {
+                     "name": "QuTech Delft lab 1",
+                     "slug": "qutech-delft-lab-1",
+                     "nodes": [{"slug": "node-1", "node_parameters": None, "qubits": self.dummy_qubit},
+                               {"slug": "node-2", "node_parameters": None, "qubits": self.dummy_qubit}],
+                     "channels": [{"slug": "node-1-node-2", "parameters": self.dummy_channel_params,
+                                   "node1": "node-1", "node2": "node-2"}],
+                     "roles": {"role1": "node-1", "role2": "node-2"}
+                 },
+                 "application": [
+                    {'roles': ['role2'],
+                     'values': [{'name': 'phi', 'scale_value': 'pi', 'value': 0.0},
+                                {'name': 'theta', 'scale_value': 'pi', 'value': 0.0}]}
+                 ]
+            }
+        }
+        self.experiment_1 = {
+            'id': 2,
+             'url': f'{self.host}experiments/1/',
+             'app_version': f'{self.host}app-versions/42/',
+             'personal_note': 'Experiment created by qne-adk',
+             'is_marked': False
+        }
+        self.experiment_2 = {
+            'id': 3,
+            'url': f'{self.host}experiments/2/',
+            'app_version': f'{self.host}app-versions/42/',
+            'personal_note': 'Test',
+            'is_marked': False
+        }
+        self.list_experiments = [self.experiment_1, self.experiment_2]
+        self.backend_nv_center = {
+                'id': 2,
+                'url': f'{self.host}backendtypes/2/',
+                'name': 'NV center hardware',
+                'is_hardware_backend': True,
+                'required_permission': 'can_execute',
+                'description': 'NV center quantum computing backend for specialized experiments.',
+                'is_allowed': True,
+                'status': 'ONLINE',
+                'status_message': 'This backend is online.',
+                'max_number_of_simultaneous_experiments': 1,
+                'networks': [{'id': 4, 'url': f'{self.host}networks/4/', 'name': 'QuTech Delft lab 1',
+                              'slug': 'qutech-delft-lab-1'}]
+            }
+        self.backend_netsquid_simulator = {
+            'id': 1,
+            'url': f'{self.host}backendtypes/1/',
+            'name': 'NetSquid simulator',
+            'is_hardware_backend': False,
+            'required_permission': 'can_simulate',
+            'description': 'The Network Simulator for Quantum Information using discrete events running on a Hetzner VPS.',
+            'is_allowed': True,
+            'status': 'ONLINE',
+            'status_message': 'This backend is online.',
+            'max_number_of_simultaneous_experiments': 0,
+            'networks': [{'id': 1, 'url': f'{self.host}networks/1/', 'name': 'Randstad', 'slug': 'randstad'},
+                         {'id': 2, 'url': f'{self.host}networks/2/', 'name': 'The Netherlands',
+                          'slug': 'the-netherlands'},
+                         {'id': 3, 'url': f'{self.host}networks/3/', 'name': 'Europe', 'slug': 'europe'},
+                         {'id': 4, 'url': f'{self.host}networks/4/', 'name': 'QuTech Delft lab 1',
+                          'slug': 'qutech-delft-lab-1'}]
+        }
+        self.list_backendtypes = [self.backend_nv_center, self.backend_netsquid_simulator]
+        self.experiment = {
+            'app_version': f'{self.host}app-versions/42/',
+            'created_at': '2024-10-27T14:08:54.127099Z',
+            'id': 18,
+            'is_marked': False,
+            'personal_note': 'Experiment created by qne-adk',
+            'url': f'{self.host}experiments/18/'
+        }
+        self.asset = {
+            'id': 18,
+            'url': f'{self.host}assets/18/',
+            'network': {
+                'name': 'Randstad',
+                'slug': 'randstad',
+                'channels': [],
+                'nodes': [],
+                'roles': {'role1': 'n1',
+                          'role2': 'n2'}},
+            'application': [{'roles': ['role2'], 'values': [{'name': 'phi', 'value': 0.0, 'scale_value': 'pi'},
+                                                            {'name': 'theta', 'value': 0.0, 'scale_value': 'pi'}]}],
+            'experiment': f'{self.host}experiments/18/'}
+        self.roundset_new = {
+            'id': 11,
+            'url': f'{self.host}round-sets/11/',
+            'number_of_rounds': 1,
+            'status': 'NEW',
+            'backend_type': f'{self.host}backendtypes/2/',
+            'backend': None,
+            'queued_at': '2024-10-27T14:21:12.292070Z',
+            'input': f'{self.host}assets/18/',
+            'progress': 0.0,
+            'description': ''
+        }
+        self.roundset_complete = {
+            'id': 11,
+            'url': f'{self.host}round-sets/11/',
+            'number_of_rounds': 1,
+            'status': 'COMPLETE',
+            'backend_type': f'{self.host}backendtypes/2/',
+            'backend': f'{self.host}backend/1/',
+            'queued_at': '2024-10-27T14:21:12.292070Z',
+            'input': f'{self.host}assets/18/',
+            'progress': 100.0,
+            'description': ''
+        }
+        self.results_roundset = {
+            'round_number': 1,
+            'round_set': f'{self.host}round-sets/11/',
+            'round_result': {},
+            'instructions': [],
+            'cumulative_result': {}
+        }
         with patch('adk.api.remote_api.AuthManager'), \
              patch('adk.api.remote_api.QneFrontendClient'), \
              patch('adk.api.remote_api.ResourceManager'):
@@ -186,8 +345,25 @@ class TestRemoteApiAuthentication(TestRemoteApi):
 
 
 class TestRemoteApiApplication(TestRemoteApi):
-    def test_list_application(self):
-        pass
+    def test_list_applications(self):
+        self.remote_api._RemoteApi__qne_client.list_applications.return_value = self.list_applications
+        application_list = self.remote_api.list_applications()
+        for application in application_list:
+            self.assertEqual(application["slug"], self.application["slug"])
+
+    def test_delete_application(self):
+        self.remote_api._RemoteApi__qne_client.destroy_application.side_effect = None
+        deleted = self.remote_api.delete_application(None)
+        self.assertFalse(deleted)
+        deleted = self.remote_api.delete_application("not_a_number")
+        self.assertFalse(deleted)
+        deleted = self.remote_api.delete_application("124")
+        self.assertTrue(deleted)
+        self.remote_api._RemoteApi__qne_client.destroy_application.side_effect = ErrorResponse(title="title",
+                                                                                               status_code=3,
+                                                                                               content=None)
+        deleted = self.remote_api.delete_application("124")
+        self.assertFalse(deleted)
 
     def test_get_application_config(self):
         pass
@@ -538,5 +714,129 @@ class TestRemoteApiApplication(TestRemoteApi):
 
 
 class TestRemoteApiExperiment(TestRemoteApi):
-    def test_create_experiment(self):
-        pass
+    def test_delete_experiment(self):
+        self.remote_api._RemoteApi__qne_client.destroy_experiment.side_effect = None
+        deleted = self.remote_api.delete_experiment(None)
+        self.assertFalse(deleted)
+        deleted = self.remote_api.delete_experiment("not_a_number")
+        self.assertFalse(deleted)
+        deleted = self.remote_api.delete_experiment("124")
+        self.assertTrue(deleted)
+        self.remote_api._RemoteApi__qne_client.destroy_experiment.side_effect = ErrorResponse(title="title",
+                                                                                              status_code=3,
+                                                                                              content=None)
+        deleted = self.remote_api.delete_experiment("124")
+        self.assertFalse(deleted)
+
+    def test_experiment_list(self):
+        self.remote_api._RemoteApi__qne_client.list_experiments.return_value = self.list_experiments
+        self.remote_api._RemoteApi__qne_client.retrieve_appversion.return_value = self.retrieve_appversion
+        self.remote_api._RemoteApi__qne_client.retrieve_application.return_value = self.retrieve_application
+        experiment_list = self.remote_api.experiments_list()
+        for experiment in experiment_list:
+            self.assertEqual(experiment["name"], str(self.retrieve_application["slug"]))
+
+    def test_validate_experiment_succeeds(self):
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+
+        error_dict = get_empty_errordict()
+        self.remote_api.validate_experiment(self.experiment_data, error_dict)
+        self.assertEqual(error_dict, {'error': [], 'info': [], 'warning': []})
+
+    def test_validate_experiment_fails(self):
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+
+        error_dict = get_empty_errordict()
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = []
+        self.remote_api.validate_experiment(self.experiment_data, error_dict)
+        self.assertIn("Backend in experiment is not a valid remote backend "
+                      "(names must match)", error_dict['error'])
+
+        error_dict = get_empty_errordict()
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+        self.experiment_data["meta"]["backend"]["type"] = "non-existent backendtype"
+        self.remote_api.validate_experiment(self.experiment_data, error_dict)
+        self.assertIn("Backend in experiment is not a valid remote backend "
+                      "(names must match)", error_dict['error'])
+
+        error_dict = get_empty_errordict()
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+        self.experiment_data["meta"]["backend"]["location"] = "local"
+        self.experiment_data["meta"]["backend"]["type"] = "NV center hardware"
+        self.list_backendtypes[0]["is_allowed"] = False
+        self.list_backendtypes[0]["status"] = "OFFLINE"
+        self.remote_api.validate_experiment(self.experiment_data, error_dict)
+        self.assertIn("Backend location in experiment is not remote", error_dict['error'])
+        self.assertIn("The requested remote backend is OFFLINE", error_dict['warning'])
+        self.assertIn('The requested remote backend is not available for your current account type, select a '
+                      'different backend', error_dict['error'])
+
+        error_dict = get_empty_errordict()
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+        self.experiment_data["asset"]["network"]["slug"] = "randstad"
+        self.experiment_data["asset"]["network"]["name"] = "Randstad"
+        self.experiment_data["meta"]["backend"]["location"] = "remote"
+        self.experiment_data["meta"]["backend"]["type"] = "NV center hardware"
+        self.list_backendtypes[0]["is_allowed"] = True
+        self.list_backendtypes[0]["status"] = "ONLINE"
+        self.remote_api.validate_experiment(self.experiment_data, error_dict)
+        self.assertIn("The requested remote backend is not able to run an experiment on the "
+                      "selected network, select a different backend or change the network", error_dict['error'])
+
+    def test_run_experiment_success(self):
+        with patch.object(RemoteApi, "_RemoteApi__get_application_by_slug") as get_application_by_slug_mock:
+            self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+            self.remote_api._RemoteApi__qne_client.retrieve_user.return_value = self.user
+            self.remote_api._RemoteApi__qne_client.app_config_appversion.return_value = self.app_config
+            self.remote_api._RemoteApi__qne_client.app_versions_application.return_value = self.app_versions_not_owner
+            self.remote_api._RemoteApi__qne_client.create_experiment.return_value = self.experiment
+            self.remote_api._RemoteApi__qne_client.create_asset.return_value = self.asset
+            self.remote_api._RemoteApi__qne_client.create_roundset.return_value = self.roundset_new
+
+            get_application_by_slug_mock.return_value = self.application
+            return_value = self.remote_api.run_experiment(self.experiment_data)
+
+            self.assertEqual(return_value, (str(self.roundset_new["url"]), str(self.experiment["id"])))
+
+            experiment_to_create = {
+                'app_version': f'{self.host}app_version/42',
+                'personal_note': 'Experiment created by qne-adk',
+                'is_marked': False,
+                'owner': f'{self.host}users/1/'
+            }
+            self.remote_api._RemoteApi__qne_client.create_experiment.assert_called_once_with(experiment_to_create)
+
+            roundset_to_create = {
+                'backend_type': f'{self.host}backendtypes/2/',
+                'input': f'{self.host}assets/18/',
+                'number_of_rounds': 1,
+                'status': 'NEW'
+            }
+            self.remote_api._RemoteApi__qne_client.create_roundset.assert_called_once_with(roundset_to_create)
+            self.remote_api._RemoteApi__qne_client.app_config_appversion.assert_called_once_with(self.app_config["app_version"])
+            self.remote_api._RemoteApi__qne_client.app_versions_application.assert_called_once_with(
+                self.application["url"])
+
+    def test_run_experiment_fails(self):
+        self.remote_api._RemoteApi__qne_client.list_backendtypes.return_value = self.list_backendtypes
+
+        self.experiment_data["meta"]["backend"]["type"] = "non-existent backendtype"
+        with self.assertRaises(ExperimentValueError) as cm:
+            return_value = self.remote_api.run_experiment(self.experiment_data)
+        self.assertEqual("Backend in experiment is not a valid remote backend (names must match)",
+                         str(cm.exception))
+
+    def test_get_results_succeeds(self):
+        with patch("adk.api.remote_api.time"):
+            self.remote_api._RemoteApi__qne_client.retrieve_roundset.side_effect = [self.roundset_new, self.roundset_complete]
+            self.remote_api._RemoteApi__qne_client.results_roundset.return_value = [self.results_roundset]
+            roundset_url = self.roundset_new["url"]
+
+            result_list = self.remote_api.get_results(roundset_url, block=True)
+            self.assertEqual(len(result_list), 1)
+            for result in result_list:
+                self.assertEqual(result["round_number"], self.results_roundset["round_number"])
+                self.assertEqual(result["round_result"], self.results_roundset["round_result"])
+                self.assertEqual(result["instructions"], self.results_roundset["instructions"])
+                self.assertEqual(result["cumulative_result"], self.results_roundset["cumulative_result"])
+                self.assertEqual(result["round_result"], self.results_roundset["round_result"])

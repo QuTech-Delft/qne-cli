@@ -15,7 +15,7 @@ from adk.managers.config_manager import ConfigManager
 from adk.managers.roundset_manager import RoundSetManager
 from adk.generators.network_generator import FullyConnectedNetworkGenerator
 from adk.parsers.output_converter import OutputConverter
-from adk.settings import BASE_DIR
+from adk.settings import BASE_DIR, DEFAULT_BACKEND_TYPE
 from adk.type_aliases import (AppConfigType, AppResultType, ApplicationType, ApplicationDataType, app_configNetworkType,
                               app_configApplicationType, AssetType, assetApplicationType, assetNetworkType,
                               ErrorDictType, ExperimentDataType, ResultType,
@@ -212,7 +212,7 @@ class LocalApi:
 
     def _get_network_nodes(self) -> Dict[str, List[str]]:
         """
-        Loops trough all the networks in networks/networks.json and gets all the nodes within this network.
+        Loops through all the networks in networks/networks.json and gets all the nodes within this network.
 
         returns:
         Returns a dict of networks, each having their own list including the nodes:
@@ -591,7 +591,7 @@ class LocalApi:
             application_path: Path of where the application is located
 
         returns:
-            Returns empty list when all validations passes
+            Returns empty list when all validations pass
             Returns dict containing error messages of the validations that failed
         """
         error_dict: ErrorDictType = utils.get_empty_errordict()
@@ -903,7 +903,7 @@ class LocalApi:
         Create all the necessary resources for experiment creation
          - 1. Get the network data for the specified network_name
          - 2. Create the asset
-         - 3. Create experiment.json containing the meta data and asset information
+         - 3. Create experiment.json containing the metadata and asset information
 
         Args:
             experiment_name: Name of the experiment
@@ -963,7 +963,8 @@ class LocalApi:
     def __create_experiment(self, experiment_name: str, application_name: str, local: bool, path: Path,
                             app_config: AppConfigType, asset_network: assetNetworkType) -> None:
         """
-        Create experiment.json with meta and asset information
+        Create experiment.json with meta and asset information. We don't need to check if the network is compatible
+        with the default backend type because the default backend type can run all networks.
 
         Args:
             experiment_name: Name of the directory where experiment.json will be created
@@ -990,7 +991,7 @@ class LocalApi:
             },
             "backend": {
                 "location": "local" if local else "remote",
-                "type": "local_netsquid" if local else "remote_netsquid"
+                "type": DEFAULT_BACKEND_TYPE
             },
             "description": f"description of {experiment_name} here",
             "number_of_rounds": 1,
@@ -1298,9 +1299,9 @@ class LocalApi:
             The round set from the experiment.json
         """
         if not self.is_experiment_local(experiment_path):
-            experiment_data = self.get_experiment_data(experiment_path)
-            if "round_set" in experiment_data["meta"]:
-                return cast(str, experiment_data["meta"]["round_set"])
+            experiment_meta = self.get_experiment_meta(experiment_path)
+            if "round_set" in experiment_meta:
+                return cast(str, experiment_meta["round_set"])
         return None
 
     @staticmethod
@@ -1565,7 +1566,7 @@ class LocalApi:
         result = output_converter.convert(round_number=1)
         return [result]
 
-    def validate_experiment(self, experiment_path: Path) -> ErrorDictType:
+    def validate_experiment(self, experiment_path: Path, error_dict: ErrorDictType) -> None:
         """
         Validates the experiment by checking:
         - if the structure is correct and consists of an experiment.json
@@ -1577,18 +1578,13 @@ class LocalApi:
 
         Args:
             experiment_path: The location of the experiment
-
-        Returns:
-            Dictionary containing lists of error, warning and info messages of the validations that failed
+            error_dict: Dictionary containing error and warning messages of the validations that failed
         """
         local = self.is_experiment_local(experiment_path=experiment_path)
-        error_dict: ErrorDictType = utils.get_empty_errordict()
 
         self._validate_experiment_json(experiment_path=experiment_path, error_dict=error_dict)
         if local:
             self._validate_experiment_input(experiment_path=experiment_path, error_dict=error_dict)
-
-        return error_dict
 
     def _validate_experiment_json(self, experiment_path: Path, error_dict: ErrorDictType) -> None:
         """
@@ -1606,13 +1602,8 @@ class LocalApi:
         if not valid:
             error_dict["error"].append(message)
         else:
-            # Check if experiment is local or remote
             experiment_data = self.get_experiment_data(experiment_path)
-            # location is required field in schema
-            location = experiment_data["meta"]["backend"]["location"].strip().lower()
-            if location not in ["local", "remote"]:
-                error_dict["warning"].append(f"In file '{experiment_json_file}': only 'local' or 'remote' is supported "
-                                             f"for property 'location'")
+            self._validate_experiment_backend(experiment_json_file, experiment_data, error_dict)
             # slug is now also a required field
             experiment_network_slug = experiment_data["asset"]["network"]["slug"]
             # Check if the chosen network exists
@@ -1690,6 +1681,28 @@ class LocalApi:
                 error_dict["error"].append(f"In file '{experiment_path / 'experiment.json'}': role '{role}' is not"
                                            f" valid for the application")
 
+    def _validate_experiment_backend(self, experiment_file_path: Path, experiment_data: Dict[str, Any], error_dict:
+                                     ErrorDictType) -> None:
+        """
+        Validate if the backend properties are valid. Backend property location must be local or remote.
+
+        Args:
+            experiment_file_path: The location of the experiment.json file
+            experiment_data: contents of the experiment.json file
+            error_dict: Dictionary containing error and warning messages of the validations that failed
+        """
+        # Check if experiment backend location is local or remote
+        # location is required field in schema
+        location = experiment_data["meta"]["backend"]["location"].strip().lower()
+        if location not in ["local", "remote"]:
+            error_dict["warning"].append(f"In file '{experiment_file_path}': only 'local' or 'remote' is supported "
+                                         f"for backend property 'location'")
+        if location == "local":
+            # local backend must be default backend
+            if experiment_data["meta"]["backend"]["type"].strip().lower() != DEFAULT_BACKEND_TYPE.strip().lower():
+                error_dict["warning"].append(f"In file '{experiment_file_path}': local backend must "
+                                             f"be {DEFAULT_BACKEND_TYPE}")
+
     def _validate_experiment_nodes(self, experiment_file_path: Path, experiment_data: Dict[str, Any], error_dict:
                                    ErrorDictType) -> None:
         """
@@ -1704,7 +1717,7 @@ class LocalApi:
         """
         experiment_network_slug = experiment_data["asset"]["network"]["slug"]
 
-        # Check if the amount of nodes are valid for this network
+        # Check if the amount of nodes is valid for this network
         experiment_nodes = experiment_data["asset"]["network"]["nodes"]
 
         all_network_nodes = self._get_network_nodes()

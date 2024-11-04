@@ -3,6 +3,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_BACKEND_TYPE = 'NetSquid simulator'
 
 
 class Settings(BaseSettings):

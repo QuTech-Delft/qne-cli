@@ -533,15 +533,15 @@ def experiments_run(
     fetched at a later moment.
     """
     experiment_path, _ = retrieve_experiment_name_and_path(experiment_name=experiment_name)
+    local = local_api.is_experiment_local(experiment_path=experiment_path)
     # Validate the experiment before executing the run command
-    validate_dict = processor.experiments_validate(experiment_path=experiment_path)
+    validate_dict = processor.experiments_validate(experiment_path=experiment_path, local=local)
 
     if validate_dict["error"] or validate_dict["warning"]:
         typer.echo("Experiment did not run")
         validation_messages = format_validation_messages(validate_dict)
         raise ExperimentFailedValidation(validation_messages)
 
-    local = local_api.is_experiment_local(experiment_path=experiment_path)
     if local:
         block = True
     if update:
@@ -588,7 +588,7 @@ def experiments_validate(
     """
     experiment_path, experiment_name = retrieve_experiment_name_and_path(experiment_name=experiment_name)
 
-    validate_dict = processor.experiments_validate(experiment_path=experiment_path)
+    validate_dict = processor.experiments_validate(experiment_path=experiment_path, local=True)
     validation_messages = format_validation_messages(validate_dict)
 
     if validate_dict["error"] or validate_dict["warning"]:

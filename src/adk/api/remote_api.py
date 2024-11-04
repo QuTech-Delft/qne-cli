@@ -16,7 +16,8 @@ from adk.type_aliases import (AppConfigType, AppResultType, AppSourceFilesType, 
                               ApplicationType, ApplicationDataType, AssetType, assetNetworkType, ErrorDictType,
                               ExperimentType, FinalResultType, GenericNetworkData, ExperimentDataType, ResultType,
                               RoundSetType, round_resultType, cumulative_resultType, instructionsType, ChannelType,
-                              parametersType, coordinatesType, listValuesType, app_ownerType)
+                              parametersType, coordinatesType, listValuesType, app_ownerType, BackendTypeType,
+                              NetworkListType)
 from adk.settings import BASE_DIR
 from adk.utils import get_default_remote_data
 
@@ -683,7 +684,7 @@ class RemoteApi:
             application_slug: Slug of the application
 
         returns:
-            Returns empty list when all validations passes
+            Returns empty list when all validations pass
             Returns dict containing error messages of the validations that failed
         """
         error_dict: ErrorDictType = utils.get_empty_errordict()
@@ -723,6 +724,48 @@ class RemoteApi:
             experiment["name"] = str(application["slug"])
 
         return experiment_list
+
+    def __get_backend_type(self, backend_type_name: str) -> List[BackendTypeType]:
+        """
+        Get the backend type info for the (remote) backend type in the experiment data.
+
+        Returns:
+            0 or 1 backend types with this type
+        """
+        backend_types = self.__qne_client.list_backendtypes()
+        # "type" is required
+        backend_types = [backend_type for backend_type in backend_types if str(backend_type["name"]).lower() ==
+                         backend_type_name.lower()]
+        if len(backend_types) > 1:
+            # QNE configuration error, should be solved in QNE
+            raise ExperimentValueError("More backend types with the same name configured in QNE")
+        return backend_types
+
+    def validate_experiment(self, experiment_data: ExperimentDataType, error_dict: ErrorDictType) -> None:
+        """
+        Validate if the remote backend settings are valid before experiment is created
+        """
+        backend_data = experiment_data["meta"]["backend"]
+        # "location" is required
+        if backend_data["location"].strip().lower() != "remote":
+            error_dict["error"].append("Backend location in experiment is not remote")
+        # "type" is required
+        backend_types = self.__get_backend_type(experiment_data["meta"]["backend"]["type"])
+        if len(backend_types) == 0:
+            error_dict["error"].append("Backend in experiment is not a valid remote backend "
+                                       "(names must match)")
+        else:
+            networks = cast(NetworkListType, backend_types[0]["networks"])
+            networks = [network for network in networks if network["slug"] ==
+                        experiment_data["asset"]["network"]["slug"]]
+            if len(networks) == 0:
+                error_dict["error"].append("The requested remote backend is not able to run an experiment on the "
+                                           "selected network, select a different backend or change the network")
+            if not backend_types[0]["is_allowed"]:
+                error_dict["error"].append("The requested remote backend is not available for your current account "
+                                           "type, select a different backend")
+            if backend_types[0]["status"] == "OFFLINE":
+                error_dict["warning"].append("The requested remote backend is OFFLINE")
 
     def __create_experiment(self, application_slug: str, app_version_url: str) -> ExperimentType:
         """
@@ -774,7 +817,7 @@ class RemoteApi:
         """
         Because of differences in channel definition for api-router networks and asset networks we need a fix to
         translate these (local) channels to a format that the backend expects.
-        Also the asset needs an experiment entry with the experiment url
+        Also, the asset needs an experiment entry with the experiment url
         """
         asset_network = cast(assetNetworkType, asset_to_create["network"])
         experiment_channels = asset_network["channels"]
@@ -789,23 +832,24 @@ class RemoteApi:
         asset_to_create["experiment"] = experiment_url
         return asset_to_create
 
-    def __create_round_set(self, asset_url: str, number_of_rounds: int) -> RoundSetType:
+    def __create_round_set(self, asset_url: str, backend_type_url: str, number_of_rounds: int) -> RoundSetType:
         """
         Create and send a round set object to api-router
         """
-        round_set_to_create = self.__create_round_set_type(asset_url, number_of_rounds)
+        round_set_to_create = self.__create_round_set_type(asset_url, backend_type_url, number_of_rounds)
         round_set = self.__qne_client.create_roundset(round_set_to_create)
 
         return round_set
 
     @staticmethod
-    def __create_round_set_type(asset_url: str, number_of_rounds: int) -> RoundSetType:
+    def __create_round_set_type(asset_url: str, backend_type_url: str, number_of_rounds: int) -> RoundSetType:
         """
         Create and return a round set object for sending to api-router
         """
         round_set: RoundSetType = {
           "number_of_rounds": number_of_rounds,
           "status": "NEW",
+          "backend_type": backend_type_url,
           "input": asset_url
         }
         return round_set
@@ -822,11 +866,15 @@ class RemoteApi:
         """
         application_slug = experiment_data["meta"]["application"]["slug"]
         app_version_url = experiment_data["meta"]["application"]["app_version"]
+        backend_type = self.__get_backend_type(experiment_data["meta"]["backend"]["type"])
+        if len(backend_type) == 0:
+            raise ExperimentValueError("Backend in experiment is not a valid remote backend "
+                                       "(names must match)")
         experiment = self.__create_experiment(application_slug, app_version_url)
         experiment_asset = experiment_data["asset"]
         asset = self.__create_asset(experiment_asset, str(experiment["url"]))
         number_of_rounds = experiment_data["meta"]["number_of_rounds"]
-        round_set = self.__create_round_set(str(asset["url"]), number_of_rounds)
+        round_set = self.__create_round_set(str(asset["url"]), str(backend_type[0]["url"]), number_of_rounds)
 
         return str(round_set["url"]), str(experiment["id"])
 
@@ -948,7 +996,7 @@ class RemoteApi:
         Get the remote networks and update the local network definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "networks"
@@ -958,7 +1006,7 @@ class RemoteApi:
         networks = self.__qne_client.list_networks()
         for network in networks:
             network_type_json: Dict[str, Union[str, List[str]]] = {}
-            network_type = self.__qne_client.retrieve_network(str(network["url"]))
+            network_type = self.__qne_client.retrieve_network(cast(str, network["url"]))
             network_type_json["name"] = str(network_type["name"])
             network_type_json["slug"] = str(network_type["slug"])
             network_type_channels: List[str] = []
@@ -991,7 +1039,7 @@ class RemoteApi:
         Get the remote channels and update the local channel definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "channels"
@@ -1020,7 +1068,7 @@ class RemoteApi:
         Get the remote nodes and update the local node definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "nodes"
@@ -1053,7 +1101,7 @@ class RemoteApi:
         Get the remote templates and update the local template definitions
 
         Args:
-            overwrite: When True, replace the local files. Otherwise try to merge (keeping the new local network
+            overwrite: When True, replace the local files. Otherwise, try to merge (keeping the new local network
             entities)
         """
         entity = "templates"
