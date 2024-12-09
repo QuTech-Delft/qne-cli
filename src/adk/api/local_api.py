@@ -13,9 +13,10 @@ from adk.exceptions import (ApplicationDoesNotExist,
                             NetworkNotFound, NoNetworkAvailable, PackageNotComplete, SchemaError)
 from adk.managers.config_manager import ConfigManager
 from adk.managers.roundset_manager import RoundSetManager
+from adk.managers.vanilla_netsquid_roundet_manager import VanillaNetSquidRoundSetManager
 from adk.generators.network_generator import FullyConnectedNetworkGenerator
 from adk.parsers.output_converter import OutputConverter
-from adk.settings import BASE_DIR, DEFAULT_BACKEND_TYPE
+from adk.settings import BASE_DIR, DEFAULT_BACKEND_TYPE, SUPPORTED_BACKEND_TYPES
 from adk.type_aliases import (AppConfigType, AppResultType, ApplicationType, ApplicationDataType, app_configNetworkType,
                               app_configApplicationType, AssetType, assetApplicationType, assetNetworkType,
                               ErrorDictType, ExperimentDataType, ResultType,
@@ -1515,7 +1516,14 @@ class LocalApi:
         if update:
             self.__prepare_input_files(experiment_path)
         local_round_set: RoundSetType = {"url": "local"}
-        round_set_manager = RoundSetManager(round_set=local_round_set, asset=self.get_experiment_asset(experiment_path),
+        experiment_meta = self.get_experiment_meta(experiment_path)
+        if experiment_meta['backend']['type'] == "NetSquid simulator":
+            round_set_manager = RoundSetManager(round_set=local_round_set,
+                                            asset=self.get_experiment_asset(experiment_path),
+                                            experiment_path=experiment_path)
+        elif experiment_meta['backend']['type'] == "Vanilla NetSquid simulator":
+            round_set_manager = VanillaNetSquidRoundSetManager(round_set=local_round_set,
+                                            asset=self.get_experiment_asset(experiment_path),
                                             experiment_path=experiment_path)
         results = round_set_manager.process(timeout)
         return results
@@ -1698,8 +1706,8 @@ class LocalApi:
             error_dict["warning"].append(f"In file '{experiment_file_path}': only 'local' or 'remote' is supported "
                                          f"for backend property 'location'")
         if location == "local":
-            # local backend must be default backend
-            if experiment_data["meta"]["backend"]["type"].strip().lower() != DEFAULT_BACKEND_TYPE.strip().lower():
+            # local backend must be one of the supported backends
+            if experiment_data["meta"]["backend"]["type"].strip().lower() not in [s.strip().lower() for s in SUPPORTED_BACKEND_TYPES]:
                 error_dict["warning"].append(f"In file '{experiment_file_path}': local backend must "
                                              f"be {DEFAULT_BACKEND_TYPE}")
 

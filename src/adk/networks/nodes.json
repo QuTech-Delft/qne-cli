@@ -207,6 +207,66 @@
         "relaxation-time",
         "dephasing-time"
       ]
+    },
+    {
+      "name": "Utrecht University",
+      "slug": "utrecht-university",
+      "coordinates": {
+        "latitude": 52.0859,
+        "longitude": 5.1715
+      },
+      "node_parameters": [
+        "bsm-detector-efficiency"
+      ],
+      "number_of_qubits": 10,
+      "qubit_parameters": [
+        "relaxation-time"
+      ]
+    },
+    {
+      "name": "UMC Utrecht",
+      "slug": "umc-utrecht",
+      "coordinates": {
+        "latitude": 52.0858,
+        "longitude": 5.1795
+      },
+      "node_parameters": [
+        "bsm-detector-efficiency"
+      ],
+      "number_of_qubits": 10,
+      "qubit_parameters": [
+        "relaxation-time"
+      ]
+    },
+    {
+      "name": "Eurofiber Datacenter Utrecht",
+      "slug": "eurofiber-datacenter-utrecht",
+      "coordinates": {
+        "latitude": 52.1230,
+        "longitude": 5.1437
+      },
+      "node_parameters": [
+        "bsm-detector-efficiency"
+      ],
+      "number_of_qubits": 10,
+      "qubit_parameters": [
+        "relaxation-time"
+      ]
+    },
+    {
+      "name": "Surf HQ",
+      "slug": "surf-hq",
+      "coordinates": {
+        "latitude": 52.0890,
+        "longitude": 5.1134
+      },
+      "node_parameters": [
+        "bsm-detector-efficiency"
+      ],
+      "number_of_qubits": 10,
+      "qubit_parameters": [
+        "relaxation-time"
+      ]
     }
   ]
 }

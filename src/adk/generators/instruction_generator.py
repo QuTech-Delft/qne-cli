@@ -195,9 +195,80 @@ class ApplyGateInstruction(BaseInstruction):
         return "apply_gate"
 
 
+class BSMInstruction(BaseInstruction):
+    template = {
+        "command": "bsm-measurement",
+        "qubits": None,
+        "gate": "BSM",
+        "parameters": None,
+        "groups": None,
+        "outcome": None
+    }
+
+    @property
+    def payload(self) -> InstructionType:
+        return {
+            'outcome': self._get_field('OUT')
+        }
+
+    @staticmethod
+    def get_instruction() -> str:
+        return "BSM"
+
+class TransferQubitInstruction(BaseInstruction):
+    template: Dict[str, Any] = {
+        "command": "transfer-qubit",
+        "action": None,
+        "from": None,
+        "to": None,
+        "channels": None,
+        "groups": None,
+    }
+
+    @property
+    def payload(self) -> InstructionType:
+        nodes = self._get_field("NOD")
+        return {
+            'action': self._get_action(),
+            'from': nodes[0],
+            'to': nodes[1],
+            'channels': self._get_field("PTH"),
+        }
+
+    @staticmethod
+    @abstractmethod
+    def _get_action() -> str:
+        """TransferQubitInstruction subclass has to indicate which entanglement action it represents."""
+
+    @staticmethod
+    @abstractmethod
+    def get_instruction() -> str:
+        """Instruction name from simulator only exists for subclasses of TransferQubitInstruction."""
+
+
+class StartTransferQubitInstruction(TransferQubitInstruction):
+    @staticmethod
+    def _get_action() -> str:
+        return "send"
+
+    @staticmethod
+    def get_instruction() -> str:
+        return "FlyingQubitSent"
+
+
+class FinishTransferQubitInstruction(TransferQubitInstruction):
+    @staticmethod
+    def _get_action() -> str:
+        return "finished"
+
+    @staticmethod
+    def get_instruction() -> str:
+        return "FlyingQubitReceive"
+
 class InstructionGenerator:
     INSTRUCTION_CLASSES = [ApplicationFinishedInstruction, ApplyGateInstruction, EntanglementStartInstruction,
-                           EntanglementFinishInstruction, ClassicalMessageInstruction, UserMessageInstruction]
+                           EntanglementFinishInstruction, ClassicalMessageInstruction, UserMessageInstruction,
+                           BSMInstruction, StartTransferQubitInstruction, FinishTransferQubitInstruction]
 
     INSTRUCTION_MAPPING = {}
     for instruction_class in INSTRUCTION_CLASSES:

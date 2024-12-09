@@ -43,6 +43,18 @@
       "channels": [
         "node-1-node-2"
       ]
+    },
+    "surf-qbird": {
+      "name": "Surf QBird",
+      "slug": "surf-qbird",
+      "channels": [
+        "utrecht-university-umc-utrecht",
+        "utrecht-university-surf-hq",
+        "utrecht-university-eurofiber-datacenter-utrecht",
+        "umc-utrecht-surf-hq",
+        "umc-utrecht-eurofiber-datacenter-utrecht",
+        "surf-hq-eurofiber-datacenter-utrecht"
+      ]
     }
   }
 }

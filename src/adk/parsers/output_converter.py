@@ -112,7 +112,8 @@ class OutputConverter:
                         and not log_record['INS'] == 'create_epr' \
                         and not log_record['INS'] == 'recv_epr':
                     log_record['GAT'] = log_record['INS']
-                    log_record['INS'] = 'apply_gate'
+                    if log_record['INS'] != "BSM":
+                        log_record['INS'] = 'apply_gate'    #TODO: Should every 'INS' be of type 'apply_gate'?
                 logs.append(log_record)
 
         return sorted(logs, key=lambda l: cast(str, l['WCT']))

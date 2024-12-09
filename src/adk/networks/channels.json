@@ -159,6 +159,60 @@
       "parameters": [
         "elementary-link-fidelity"
       ]
+    },
+    {
+      "slug": "utrecht-university-umc-utrecht",
+      "node1": "utrecht-university",
+      "node2": "umc-utrecht",
+      "parameters": [
+        "p-loss-init",
+        "p-loss-length"
+      ]
+    },
+    {
+      "slug": "utrecht-university-surf-hq",
+      "node1": "utrecht-university",
+      "node2": "surf-hq",
+      "parameters": [
+        "p-loss-init",
+        "p-loss-length"
+      ]
+    },
+    {
+      "slug": "utrecht-university-eurofiber-datacenter-utrecht",
+      "node1": "utrecht-university",
+      "node2": "eurofiber-datacenter-utrecht",
+      "parameters": [
+        "p-loss-init",
+        "p-loss-length"
+      ]
+    },
+    {
+      "slug": "umc-utrecht-surf-hq",
+      "node1": "umc-utrecht",
+      "node2": "surf-hq",
+      "parameters": [
+        "p-loss-init",
+        "p-loss-length"
+      ]
+    },
+    {
+      "slug": "umc-utrecht-eurofiber-datacenter-utrecht",
+      "node1": "umc-utrecht",
+      "node2": "eurofiber-datacenter-utrecht",
+      "parameters": [
+        "p-loss-init",
+        "p-loss-length"
+      ]
+    },
+    {
+      "slug": "surf-hq-eurofiber-datacenter-utrecht",
+      "node1": "surf-hq",
+      "node2": "eurofiber-datacenter-utrecht",
+      "parameters": [
+        "p-loss-init",
+        "p-loss-length"
+      ]
     }
   ]
 }

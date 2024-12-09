@@ -59,6 +59,51 @@
         }
       ],
       "input_type": "time"
+    },
+    {
+      "title": "Probability of losing a photon when it enters channel",
+      "slug": "p-loss-init",
+      "values": [
+        {
+          "name": "p_loss_init",
+          "default_value": 0,
+          "minimum_value": 0,
+          "maximum_value": 1,
+          "unit": "",
+          "scale_value": 1.0
+        }
+      ],
+      "input_type": "fidelity_slider"
+    },
+    {
+      "title": "Photon loss probability per channel length [dB/km].",
+      "slug": "p-loss-length",
+      "values": [
+        {
+          "name": "p_loss_length",
+          "default_value": 0,
+          "minimum_value": 0,
+          "maximum_value": 1,
+          "unit": "",
+          "scale_value": 1.0
+        }
+      ],
+      "input_type": "fidelity_slider"
+    },
+    {
+      "title": "BSM Detector Efficiency",
+      "slug": "bsm-detector-efficiency",
+      "values": [
+        {
+          "name": "det_eff",
+          "default_value": 1.0,
+          "minimum_value": 0.5,
+          "maximum_value": 1.0,
+          "unit": "",
+          "scale_value": 1.0
+        }
+      ],
+      "input_type": "fidelity_slider"
     }
   ]
 }
